@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thời Khóa Biểu - Hệ thống Sinh Viên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- GIỮ NGUYÊN CSS CŨ --- */
+        :root {
+            --primary-green: #38761d;
+            --bg-gray: #f0f2f5;
+            --accent-orange: #ff6600;
+            --text-white: #ffffff;
+            --border-green: #4a8a2f;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif; margin: 0; padding: 0;
+            background-color: var(--bg-gray);
+            height: 100vh; display: flex; flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--primary-green); color: var(--text-white);
+            padding: 0 30px; height: 60px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: relative; z-index: 10;
+        }
+
+        .nav-links a {
+            color: var(--text-white); text-decoration: none; font-weight: 700; font-size: 16px; margin-right: 30px;
+            padding: 18px 0; display: inline-block; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .nav-links a.active { border-bottom: 3px solid var(--accent-orange); }
+
+        .user-area { display: flex; align-items: center; gap: 25px; }
+
+        .notification-wrapper { position: relative; cursor: pointer; }
+        .bell-icon { font-size: 24px; color: var(--text-white); transition: transform 0.2s; }
+        .bell-icon:hover { transform: scale(1.1); color: var(--accent-orange); }
+        .notif-badge {
+            position: absolute; top: -8px; right: -8px; background-color: red; color: white;
+            font-size: 10px; font-weight: bold; width: 18px; height: 18px; 
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            border: 2px solid var(--primary-green);
+        }
+
+        .dropdown-panel, .profile-dropdown {
+            display: none; position: absolute; top: 55px; right: 0; background: white; 
+            border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); border: 1px solid #e0e0e0; z-index: 100;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from {opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);}}
+
+        .dropdown-panel { width: 300px; }
+        .notif-item { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+        .notif-item strong { display: block; color: var(--primary-green); margin-bottom: 4px; }
+
+        .avatar-wrapper { position: relative; cursor: pointer; }
+        .frog-avatar {
+            width: 40px; height: 40px; border-radius: 50%; background-color: white; border: 2px solid white;
+            overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        .frog-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .profile-dropdown { width: 320px; padding: 20px; }
+        .profile-header { display: flex; gap: 15px; align-items: flex-start; padding-bottom: 15px; border-bottom: 1px solid #eee;}
+        .mini-avatar { width: 60px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #eee; }
+        .profile-details p { margin: 5px 0; font-size: 14px; color: #555; }
+        .profile-details strong { color: #333; font-weight: 600; margin-right: 5px; }
+        .student-name-large { font-size: 18px; font-weight: bold; color: var(--primary-green); margin: 0 0 5px 0; }
+        
+        .logout-btn {
+            display: block; width: 100%; text-align: center; margin-top: 15px; padding: 10px 0;
+            background-color: #fff5f5; color: #c0392b; border: 1px solid #ffcccc; border-radius: 6px;
+            font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s;
+        }
+        .logout-btn:hover { background-color: #c0392b; color: white; border-color: #c0392b; }
+
+        .main-content {
+            flex: 1; padding: 20px 40px; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+        }
+
+        .control-bar {
+            display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 25px; width: 100%;
+        }
+
+        .date-minimal {
+            display: flex; align-items: center; gap: 15px; background: white; padding: 8px 20px;
+            border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .arrow-btn {
+            background: none; border: none; cursor: pointer; font-size: 18px; color: #888; 
+            display: flex; align-items: center; padding: 5px; transition: color 0.2s;
+        }
+        .arrow-btn:hover { color: var(--primary-green); }
+
+        .custom-date-input {
+            border: none; font-size: 18px; font-weight: bold; color: var(--primary-green); 
+            font-family: 'Roboto', sans-serif; text-align: center; width: 140px; outline: none; background: transparent;
+        }
+
+        .add-event-btn {
+            background-color: var(--accent-orange); color: white; border: none; padding: 10px 20px; border-radius: 25px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 3px 10px rgba(255, 102, 0, 0.3); transition: transform 0.2s;
+        }
+        .add-event-btn:hover { transform: translateY(-2px); background-color: #e65c00; }
+
+        .schedule-list-container {
+            width: 600px; max-width: 90%; flex: 1; overflow-y: auto; padding-right: 10px; margin-bottom: 20px;
+        }
+        .schedule-list-container::-webkit-scrollbar { width: 8px; }
+        .schedule-list-container::-webkit-scrollbar-track { background: #f1f1f1; }
+        .schedule-list-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+        .schedule-item {
+            background: white; border-radius: 10px; padding: 15px 20px; margin-bottom: 15px;
+            border-left: 6px solid var(--primary-green); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s;
+        }
+        .schedule-item:hover { transform: scale(1.02); }
+        .item-left h3 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
+        .item-left p { margin: 0; font-size: 14px; color: #666; }
+        .time-badge {
+            background: #e8f5e9; color: var(--primary-green); padding: 5px 10px; 
+            border-radius: 20px; font-weight: bold; font-size: 14px;
+        }
+
+        /* Empty State */
+        .empty-state { text-align: center; color: #888; margin-top: 50px; }
+        .empty-state i { font-size: 40px; margin-bottom: 10px; color: #ddd; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: white; padding: 30px; border-radius: 15px; width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from {transform: translateY(-50px); opacity: 0;} to {transform: translateY(0); opacity: 1;}}
+        
+        .modal-box h2 { color: var(--primary-green); margin-top: 0; text-align: center; margin-bottom: 20px;}
+        .input-row { margin-bottom: 15px; }
+        .input-row label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: #555;}
+        .input-row input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .time-row { display: flex; gap: 15px; }
+        .time-col { flex: 1; }
+        .time-col input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 25px; }
+        .btn-confirm { background: var(--primary-green); color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; }
+        .btn-cancel { background: #eee; color: #333; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="nav-links">
+            <a href="#" class="active">LỊCH HỌC</a>
+            <a href="#">LỊCH THI</a>
+        </div>
+        <div class="user-area">
+            <div class="notification-wrapper" onclick="toggleDropdown('notifPanel')">
+                <i class="fa-solid fa-bell bell-icon"></i>
+                <div class="notif-badge">3</div>
+                <div class="dropdown-panel" id="notifPanel">
+                    <div class="notif-item"><strong>Cảnh báo</strong>Bạn sắp trễ hạn nộp bài tập lớn.</div>
+                    <div class="notif-item"><strong>Lịch thi</strong>Đã cập nhật lịch thi môn Triết học.</div>
+                    <div class="notif-item"><strong>Học phí</strong>Hệ thống mở cổng đóng học phí.</div>
+                </div>
+            </div>
+            <div class="avatar-wrapper" onclick="toggleDropdown('profilePanel')">
+                <div class="frog-avatar"><img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" alt="Frog"></div>
+                <div class="profile-dropdown" id="profilePanel">
+                    <div class="profile-header">
+                        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="mini-avatar" alt="Student">
+                        <div class="profile-details">
+                            <p class="student-name-large">Chu Hải Dương</p>
+                            <p><strong>Mã SV:</strong> 2451260998</p>
+                            <p><strong>Lớp:</strong> 66TTNT2</p>
+                        </div>
+                    </div>
+                    <div class="profile-details" style="margin-top: 10px;">
+                        <p><strong>Ngành:</strong> Trí tuệ nhân tạo</p>
+                        <p><strong>Khoa:</strong> Công nghệ thông tin</p>
+                    </div>
+                    <a onclick="logout()" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="control-bar">
+            <div class="date-minimal">
+                <button class="arrow-btn" onclick="changeDate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <input type="date" id="datePicker" class="custom-date-input" value="2025-12-14">
+                <button class="arrow-btn" onclick="changeDate(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <button class="add-event-btn" onclick="openModal()">
+                <i class="fa-solid fa-plus"></i> Thêm sự kiện
+            </button>
+        </div>
+
+        <div class="schedule-list-container" id="scheduleList">
+            </div>
+    </main>
+
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal-box">
+            <h2><i class="fa-regular fa-calendar-plus"></i> Thêm Sự Kiện</h2>
+            <div class="input-row">
+                <label>Tên sự kiện:</label>
+                <input type="text" id="eventName" placeholder="Ví dụ: Họp nhóm...">
+            </div>
+            <div class="time-row">
+                <div class="time-col">
+                    <label>Từ giờ:</label>
+                    <input type="time" id="startTime">
+                </div>
+                <div class="time-col">
+                    <label>Đến giờ:</label>
+                    <input type="time" id="endTime">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Hủy</button>
+                <button class="btn-confirm" onclick="confirmEvent()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. KHO DỮ LIỆU MẪU ĐỂ RANDOM ---
+        const subjects = [
+            { name: "Toán Cao Cấp 1", room: "Phòng A201" },
+            { name: "Nhập môn Trí tuệ Nhân tạo", room: "Lab AI" },
+            { name: "Lập trình Python", room: "Phòng Máy 3" },
+            { name: "Tiếng Anh Chuyên Ngành", room: "Phòng C402" },
+            { name: "Triết học Mác - Lênin", room: "Giảng đường Lớn" },
+            { name: "Kỹ năng mềm", room: "Online Teams" },
+            { name: "Cấu trúc dữ liệu", room: "Phòng B102" },
+            { name: "Mạng máy tính", room: "Lab Mạng" }
+        ];
+
+        // Biến lưu trữ lịch của toàn bộ tháng
+        let scheduleData = {};
+
+        // --- 2. HÀM SINH LỊCH NGẪU NHIÊN ---
+        function generateRandomSchedule() {
+            // Chạy từ ngày 1 đến 31 tháng 12 năm 2025
+            for (let day = 1; day <= 31; day++) {
+                // Tạo key ngày tháng dạng YYYY-MM-DD
+                let dayStr = day < 10 ? `0${day}` : `${day}`;
+                let dateKey = `2025-12-${dayStr}`;
+                
+                // Random số lượng môn học trong ngày (từ 0 đến 6 môn)
+                // Math.random() < 0.2 nghĩa là có 20% khả năng ngày nghỉ (0 môn)
+                let numClasses = Math.floor(Math.random() * 7); 
+                
+                let dailyClasses = [];
+                for (let i = 0; i < numClasses; i++) {
+                    // Chọn bừa 1 môn
+                    let randSub = subjects[Math.floor(Math.random() * subjects.length)];
+                    
+                    // Tạo giờ học giả lập (tăng dần)
+                    let startHour = 7 + (i * 2); // 7h, 9h, 11h...
+                    let endHour = startHour + 2;
+                    let timeStr = `${startHour}:00 - ${endHour}:00`;
+                    
+                    dailyClasses.push({
+                        title: randSub.name,
+                        location: randSub.room,
+                        time: timeStr
+                    });
+                }
+                scheduleData[dateKey] = dailyClasses;
+            }
+        }
+
+        // --- 3. HÀM HIỂN THỊ LỊCH RA MÀN HÌNH ---
+        function renderSchedule(dateString) {
+            const listContainer = document.getElementById('scheduleList');
+            listContainer.innerHTML = ""; // Xóa trắng danh sách cũ
+
+            const classes = scheduleData[dateString];
+
+            if (!classes || classes.length === 0) {
+                // Nếu không có môn nào -> Hiện thông báo nghỉ
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-mug-hot"></i>
+                        <h3>Hôm nay không có lịch học!</h3>
+                        <p>Thư giãn thôi nào 🐸</p>
+                    </div>`;
+                return;
+            }
+
+            // Duyệt qua từng môn và tạo HTML
+            classes.forEach(cls => {
+                let html = `
+                <div class="schedule-item">
+                    <div class="item-left">
+                        <h3>${cls.title}</h3>
+                        <p><i class="fa-solid fa-location-dot"></i> ${cls.location}</p>
+                    </div>
+                    <div class="item-right">
+                        <span class="time-badge">${cls.time}</span>
+                    </div>
+                </div>`;
+                listContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- 4. CÁC HÀM SỰ KIỆN CŨ ---
+        function toggleDropdown(id) {
+            var el = document.getElementById(id);
+            var isHidden = el.style.display === "none" || el.style.display === "";
+            document.querySelectorAll('.dropdown-panel, .profile-dropdown').forEach(d => d.style.display = 'none');
+            if (isHidden) el.style.display = "block";
+        }
+        window.onclick = function(event) {
+            if (!event.target.closest('.user-area')) {
+                document.querySelectorAll('.dropdown-panel, .profile-dropdown').forEach(d => d.style.display = 'none');
+            }
+        }
+
+        // Thay đổi ngày bằng mũi tên
+        function changeDate(days) {
+            var dateInput = document.getElementById('datePicker');
+            var current = new Date(dateInput.value);
+            current.setDate(current.getDate() + days);
+            
+            // Cập nhật giá trị ô input
+            // Cần format lại thành YYYY-MM-DD
+            let y = current.getFullYear();
+            let m = current.getMonth() + 1;
+            let d = current.getDate();
+            let mStr = m < 10 ? '0' + m : m;
+            let dStr = d < 10 ? '0' + d : d;
+            let newDateStr = `${y}-${mStr}-${dStr}`;
+            
+            dateInput.value = newDateStr;
+            
+            // Gọi hàm hiển thị lại lịch
+            renderSchedule(newDateStr);
+        }
+
+        // Sự kiện khi người dùng tự chọn ngày trong lịch
+        document.getElementById('datePicker').addEventListener('change', function() {
+            renderSchedule(this.value);
+        });
+
+        // Modal Logic
+        function openModal() { document.getElementById('eventModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('eventModal').style.display = 'none'; }
+        function confirmEvent() {
+            var name = document.getElementById('eventName').value;
+            var start = document.getElementById('startTime').value;
+            var end = document.getElementById('endTime').value;
+
+            if(name && start && end) {
+                var list = document.getElementById('scheduleList');
+                // Nếu đang hiện thông báo "nghỉ học" thì xóa nó đi trước khi thêm
+                if(document.querySelector('.empty-state')) {
+                    list.innerHTML = "";
+                }
+
+                var newItem = `
+                <div class="schedule-item" style="border-left-color: var(--accent-orange);">
+                    <div class="item-left">
+                        <h3>${name}</h3>
+                        <p><i class="fa-solid fa-thumbtack"></i> Sự kiện cá nhân</p>
+                    </div>
+                    <div class="item-right">
+                        <span class="time-badge" style="color: var(--accent-orange);">${start} - ${end}</span>
+                    </div>
+                </div>`;
+                list.insertAdjacentHTML('afterbegin', newItem);
+                alert("✅ Đã thêm sự kiện thành công!");
+                closeModal();
+            } else {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+            }
+        }
+        function logout() { window.location.href = "{{ url_for('login') }}"; }
+
+        // --- 5. KHỞI CHẠY LẦN ĐẦU ---
+        // Khi trang web vừa tải xong
+        window.onload = function() {
+            generateRandomSchedule(); // 1. Sinh lịch ngẫu nhiên
+            
+            // 2. Hiển thị lịch của ngày mặc định (14/12/2025)
+            let defaultDate = document.getElementById('datePicker').value;
+            renderSchedule(defaultDate);
+        };
+
+    </script>
+</body>
+</html>
