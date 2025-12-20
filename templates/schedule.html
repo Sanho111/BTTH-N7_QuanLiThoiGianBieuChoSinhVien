@@ -11,7 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        /* --- CSS CŨ GIỮ NGUYÊN --- */
         :root { --primary-green: #38761d; --bg-gray: #f0f2f5; --accent-orange: #ff6600; --text-white: #ffffff; --border-green: #4a8a2f; }
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: var(--bg-gray); height: 100vh; display: flex; flex-direction: column; }
         .navbar { background-color: var(--primary-green); color: var(--text-white); padding: 0 30px; height: 60px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: relative; z-index: 10; }
@@ -37,7 +36,6 @@
         .profile-details strong { color: #333; font-weight: 600; margin-right: 5px; }
         .student-name-large { font-size: 18px; font-weight: bold; color: var(--primary-green); margin: 0 0 5px 0; }
         
-        /* [MỚI] STYLE CHO CÁC NÚT TRONG PROFILE */
         .profile-action-btn {
             display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
             margin-top: 10px; padding: 10px 15px; box-sizing: border-box;
@@ -45,11 +43,9 @@
             transition: all 0.2s; font-size: 14px; border: 1px solid transparent;
         }
         
-        /* Nút đổi mật khẩu */
         .change-pass-btn { background-color: #f0f7ff; color: #2980b9; }
         .change-pass-btn:hover { background-color: #e1efff; border-color: #bad6f5; }
 
-        /* Nút đăng xuất */
         .logout-btn { background-color: #fff5f5; color: #c0392b; margin-top: 5px; }
         .logout-btn:hover { background-color: #ffe0e0; border-color: #ffcccc; }
 
@@ -64,7 +60,7 @@
         .add-event-btn { background-color: var(--accent-orange); box-shadow: 0 3px 10px rgba(255, 102, 0, 0.3); }
         .add-event-btn:hover { background-color: #e65c00; }
         .export-btn { background-color: #3498db; box-shadow: 0 3px 10px rgba(52, 152, 219, 0.3); }
-        .export-btn:hover { background-color: #2980b9; }
+        .export-btn:hover { background-color: #2980b9; } 
 
         .schedule-list-container { width: 600px; max-width: 90%; flex: 1; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; }
         .schedule-list-container::-webkit-scrollbar { width: 8px; }
@@ -227,7 +223,6 @@
         let scheduleData = {};
         let selectedEventId = null; 
 
-        // --- 1. SINH DỮ LIỆU ---
         function generateRandomSchedule() {
             for (let day = 1; day <= 31; day++) {
                 let dayStr = day < 10 ? `0${day}` : `${day}`;
@@ -245,6 +240,7 @@
                 scheduleData[dateKey] = dailyClasses;
             }
         }
+
         function renderSchedule(dateString) {
             const listContainer = document.getElementById('scheduleList');
             listContainer.innerHTML = "";
@@ -262,13 +258,17 @@
                 listContainer.insertAdjacentHTML('beforeend', html);
             });
         }
+
         function showContextMenu(e, id) { e.preventDefault(); selectedEventId = id; const menu = document.getElementById('contextMenu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; }
+        
         document.addEventListener('click', function(e) { document.getElementById('contextMenu').style.display = 'none'; if (!e.target.closest('.user-area')) { document.querySelectorAll('.dropdown-panel, .profile-dropdown').forEach(d => d.style.display = 'none'); }});
 
-        // --- CÁC HÀM CRUD ---
         function triggerDeleteEvent() { if (!selectedEventId) return; let currentDate = document.getElementById('datePicker').value; if (confirm("Xóa sự kiện này?")) { scheduleData[currentDate] = scheduleData[currentDate].filter(item => item.id !== selectedEventId); renderSchedule(currentDate); }}
+        
         function triggerEditEvent() { if (!selectedEventId) return; let currentDate = document.getElementById('datePicker').value; let item = scheduleData[currentDate].find(i => i.id === selectedEventId); if (item) { document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-pen"></i> Chỉnh Sửa'; document.getElementById('eventName').value = item.title; document.getElementById('startTime').value = item.start; document.getElementById('endTime').value = item.end; document.getElementById('editEventId').value = item.id; document.getElementById('eventModal').style.display = 'flex'; } }
+        
         function openAddModal() { document.getElementById('modalTitle').innerHTML = '<i class="fa-regular fa-calendar-plus"></i> Thêm Mới'; document.getElementById('eventName').value = ""; document.getElementById('startTime').value = ""; document.getElementById('endTime').value = ""; document.getElementById('editEventId').value = ""; document.getElementById('eventModal').style.display = 'flex'; }
+        
         function saveEvent() {
             let name = document.getElementById('eventName').value; let start = document.getElementById('startTime').value; let end = document.getElementById('endTime').value; let editId = document.getElementById('editEventId').value; let currentDate = document.getElementById('datePicker').value;
             if (!name || !start || !end) { alert("Thiếu thông tin!"); return; }
@@ -278,8 +278,8 @@
             renderSchedule(currentDate); closeModal('eventModal');
         }
 
-        // --- EXPORT ---
         function openExportModal() { document.getElementById('exportModal').style.display = 'flex'; }
+        
         async function executeExport(type) {
             const fromDate = new Date(document.getElementById('exportFrom').value); const toDate = new Date(document.getElementById('exportTo').value); const printContainer = document.getElementById('print-container');
             printContainer.innerHTML = `<div class="print-header"><h1>Lịch Học & Sự Kiện</h1><p>Sinh viên: Chu Hải Dương - Mã SV: 2451260998</p><p>Từ ngày ${fromDate.toLocaleDateString('vi-VN')} đến ${toDate.toLocaleDateString('vi-VN')}</p></div>`;
@@ -300,15 +300,11 @@
             closeModal('exportModal');
         }
 
-        // --- [MỚI] HÀM ĐỔI MẬT KHẨU ---
         function openChangePassModal() {
-            // Reset các ô input
             document.getElementById('oldPass').value = '';
             document.getElementById('newPass').value = '';
             document.getElementById('confirmNewPass').value = '';
-            // Đóng menu profile
             document.getElementById('profilePanel').style.display = 'none';
-            // Mở modal
             document.getElementById('changePassModal').style.display = 'flex';
         }
 
@@ -327,19 +323,20 @@
                 return;
             }
 
-            // Ở đây bạn có thể thêm logic gửi dữ liệu về server nếu muốn
-            alert("✅ Đổi mật khẩu thành công!");
+            alert("Đổi mật khẩu thành công!");
             closeModal('changePassModal');
         }
 
-        // --- TIỆN ÍCH ---
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
         function toggleDropdown(id) { var el = document.getElementById(id); var isHidden = el.style.display === "none" || el.style.display === ""; document.querySelectorAll('.dropdown-panel, .profile-dropdown').forEach(d => d.style.display = 'none'); if (isHidden) el.style.display = "block"; }
+        
         function changeDate(days) { var input = document.getElementById('datePicker'); var d = new Date(input.value); d.setDate(d.getDate() + days); let y=d.getFullYear(), m=(d.getMonth()+1).toString().padStart(2,'0'), day=d.getDate().toString().padStart(2,'0'); let val=`${y}-${m}-${day}`; input.value=val; renderSchedule(val); }
+        
         document.getElementById('datePicker').addEventListener('change', function() { renderSchedule(this.value); });
+        
         function logout() { window.location.href = "{{ url_for('login') }}"; }
-
-        // --- START ---
+ 
         window.onload = function() { generateRandomSchedule(); renderSchedule(document.getElementById('datePicker').value); };
     </script>
 </body>

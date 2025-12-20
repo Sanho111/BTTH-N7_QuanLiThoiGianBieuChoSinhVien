@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKBSinhVien</title>
+    <title>Quản lí thời gian biểu sinh viên</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* GIỮ NGUYÊN CÁC STYLE CŨ CỦA BẠN */
         body {
             font-family: 'Roboto', sans-serif; margin: 0; padding: 0;
             display: flex; justify-content: center; align-items: center; height: 100vh;
@@ -41,16 +40,15 @@
         .right-side {
             width: 50%; padding: 40px;
             display: flex; flex-direction: column; justify-content: center;
-            position: relative; /* Quan trọng để chuyển đổi giao diện */
+            position: relative;
         }
 
-        /* --- CSS CHO CÁC KHUNG INPUT VÀ NÚT --- */
         h2 { margin-bottom: 10px; color: #333; font-weight: 700; font-size: 28px; }
         .subtitle { margin-bottom: 30px; color: #666; font-size: 14px; }
         .input-group { margin-bottom: 15px; text-align: left; }
         .input-group label { display: block; margin-bottom: 5px; color: #555; font-size: 14px; font-weight: 500;}
         
-        .input-wrapper { position: relative; } /* Bao quanh input để đặt icon mắt */
+        .input-wrapper { position: relative; }
         
         .input-group input {
             width: 100%; padding: 12px; padding-right: 40px;
@@ -77,7 +75,6 @@
         button:hover { transform: translateY(-3px); filter: brightness(1.1); }
         button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none;}
 
-        /* Links */
         .link-container { text-align: right; margin-bottom: 20px; margin-top: -5px;}
         .link-container a, .bottom-link a { color: #667eea; text-decoration: none; font-size: 13px; font-weight: 500; cursor: pointer;}
         .link-container a:hover, .bottom-link a:hover { text-decoration: underline; }
@@ -87,13 +84,11 @@
         .flash-message.error { background-color: #ffdde1; color: #ee5253; }
         .flash-message.success { background-color: #c8f7c5; color: #1dd1a1; }
 
-        /* --- LOGIC ẨN HIỆN CÁC FORM --- */
-        #forgot-form-section { display: none; } /* Mặc định ẩn form đổi mật khẩu */
-        #register-form-section { display: none; } /* Mới thêm dòng này: Mặc định ẩn form đăng ký */
-        #otp-group { display: none; animation: slideInUp 0.5s;} /* Mặc định ẩn ô nhập OTP */
+        #forgot-form-section { display: none; }
+        #register-form-section { display: none; }
+        #otp-group { display: none; animation: slideInUp 0.5s;}
 
         @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
     </style>
 </head>
 
@@ -101,8 +96,8 @@
     <div class="main-container">
         <div class="left-side">
             <div class="ai-text">
-                <h3 style="margin: 0; font-size: 24px;">
-                <p style="margin: 5px 0 0 0; opacity: 0.9;">
+                <h3 style="margin: 0; font-size: 24px;"></h3>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;"></p>
             </div>
         </div>
 
@@ -117,7 +112,7 @@
 
             <div id="login-form-section">
                 <h2>Đăng nhập</h2>
-                <p class="subtitle">
+                <p class="subtitle"></p>
 
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="input-group">
@@ -150,7 +145,6 @@
                 <p class="subtitle" id="forgot-subtitle">Nhập thông tin để đặt lại mật khẩu</p>
 
                 <form method="POST" action="{{ url_for('reset_password') }}" id="resetForm">
-                    
                     <div id="info-group">
                         <div class="input-group">
                             <label>Email của bạn</label>
@@ -191,6 +185,7 @@
                     </div>
                 </form>
             </div>
+
             <div id="register-form-section">
                 <h2>Đăng Ký Tài Khoản</h2>
                 <p class="subtitle">Tạo tài khoản để bắt đầu</p>
@@ -224,13 +219,10 @@
                     </div>
                 </form>
             </div>
-    
-
         </div>
     </div>
 
     <script>
-        // 1. Hàm tắt/mở mật khẩu
         function togglePass(inputId, icon) {
             const input = document.getElementById(inputId);
             const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -239,15 +231,11 @@
             icon.classList.toggle('fa-eye-slash');
         }
 
-        // 2. CÁC HÀM CHUYỂN ĐỔI MÀN HÌNH
-        
-        // Hiện form Đăng nhập (Ẩn 2 cái kia)
         function showLoginForm() {
             document.getElementById('login-form-section').style.display = 'block';
             document.getElementById('forgot-form-section').style.display = 'none';
-            document.getElementById('register-form-section').style.display = 'none'; // Ẩn form đăng ký
+            document.getElementById('register-form-section').style.display = 'none';
             
-            // Reset các form phụ để lần sau mở lại nó mới
             document.getElementById('resetForm').reset();
             document.getElementById('otp-group').style.display = 'none';
             document.getElementById('info-group').style.display = 'block';
@@ -255,22 +243,19 @@
             document.getElementById('btn-action').setAttribute('type', 'button');
         }
 
-        // Hiện form Quên mật khẩu
         function showForgotForm() {
             document.getElementById('login-form-section').style.display = 'none';
             document.getElementById('register-form-section').style.display = 'none';
             document.getElementById('forgot-form-section').style.display = 'block';
         }
 
-        // [MỚI] Hiện form Đăng ký
         function showRegisterForm() {
             document.getElementById('login-form-section').style.display = 'none';
             document.getElementById('forgot-form-section').style.display = 'none';
             document.getElementById('register-form-section').style.display = 'block';
         }
 
-        // ... (Giữ nguyên hàm handleForgotStep cũ của bạn ở dưới này nếu có) ...
-         function handleForgotStep() {
+        function handleForgotStep() {
             const btn = document.getElementById('btn-action');
             const email = document.getElementById('resetEmail').value;
             const newPass = document.getElementById('newPass').value;
