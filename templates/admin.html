@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản trị</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:ital,wght@1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --admin-bg: #295F2D; --navbar-green: #1a3d1d; --welcome-gold: #FFE67C;
+            --view-bg: #bde8a4; --header-green: #00b894; --yellow-accent: #ffcc00;
+            --btn-blue: #46b5d1; --btn-red: #ff4d4d; --btn-green: #00c853;
+            --btn-active: #155e75; --shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--admin-bg); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* Hiệu ứng mượt */
+        .sub-view { 
+            display: none; width: 100%; height: 100%; background-color: var(--view-bg); 
+            flex-direction: column; position: absolute; top: 0; left: 0;
+            opacity: 0; transform: translateY(10px); transition: 0.3s ease;
+        }
+        .sub-view.active-view { display: flex; opacity: 1; transform: translateY(0); }
+
+        /* Navbar */
+        .navbar { background-color: var(--navbar-green); color: white; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: var(--shadow); }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { color: white; text-decoration: none; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .nav-links a.active { border-bottom: 2px solid var(--welcome-gold); color: var(--welcome-gold); }
+        .avatar-container { width: 45px; height: 45px; background: black; border: 2px solid #8b0000; border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .avatar-container img { width: 75%; filter: brightness(0) invert(1); }
+
+        .view-header { background-color: var(--header-green); padding: 15px 30px; display: flex; align-items: center; gap: 15px; color: white; font-weight: bold; font-size: 18px; box-shadow: var(--shadow); }
+        
+        /* Rows Mũi tên */
+        .display-row { display: flex; align-items: center; margin-bottom: 20px; gap: 20px; width: 95%; margin-left: auto; margin-right: auto; }
+        .arrow-label { background: var(--yellow-accent); padding: 12px; min-width: 180px; border-radius: 5px 25px 25px 5px; font-weight: bold; display: flex; align-items: center; justify-content: center; color: black; }
+        .data-box { flex: 1; background: var(--yellow-accent); padding: 15px; border-radius: 8px; font-weight: bold; text-align: center; font-size: 18px; color: black; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        .empty-box { background: var(--btn-green); } /* Màu xanh tiết trống */
+
+        /* Lịch */
+        .calendar-card { background: var(--header-green); padding: 25px; border-radius: 20px; width: 420px; box-shadow: var(--shadow); }
+        .calendar-table { width: 100%; text-align: center; font-weight: bold; font-size: 19px; color: black; border-spacing: 5px; border-collapse: separate; }
+        .calendar-table td { width: 45px; height: 45px; cursor: pointer; border-radius: 10px; transition: 0.3s; }
+        .calendar-table td:not(:empty):hover { background: var(--yellow-accent); transform: scale(1.1); }
+
+        /* Tools & Badges */
+        .header-tools { position: absolute; top: 20px; right: 25px; display: flex; align-items: center; gap: 15px; }
+        .date-badge { background: var(--yellow-accent); padding: 10px 35px; border-radius: 30px; font-weight: bold; text-decoration: underline; font-size: 22px; cursor: pointer; color: black; box-shadow: var(--shadow); }
+        .btn-top-yellow { background: var(--yellow-accent); padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: var(--shadow); color: black; font-size: 18px; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 40px; border-radius: 10px; box-shadow: var(--shadow); }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-weight: bold; font-size: 18px; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; border: none; background: var(--yellow-accent); outline: none; font-weight: bold; border-radius: 4px; }
+        
+        /* Modal so sánh */
+        .comp-grid { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 20px; align-items: center; }
+        .arrow-col { display: flex; flex-direction: column; gap: 30px; justify-content: center; padding-top: 35px; color: var(--header-green); font-size: 28px; text-align: center; }
+
+        /* Success */
+        .success-purple { background: white; padding: 60px; text-align: center; border-radius: 15px; border: 3px solid #8e44ad; width: 550px; }
+
+        /* Stats & MGMT */
+        .mgmt-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 50px; padding: 50px; flex: 1; }
+        .action-box { background: var(--header-green); padding: 25px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 22px; cursor: pointer; text-decoration: underline; box-shadow: var(--shadow); margin-bottom: 20px; color: black; }
+        .menu-btn { background: var(--btn-blue); border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .menu-btn.active { background: var(--btn-active); color: white; transform: scale(1.05); }
+
+        .export-card { background: white; margin: 30px auto; width: 90%; padding: 40px; border-radius: 10px; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
+        .summary-box-grey { background: #e6e6e6; min-height: 180px; padding: 20px; border-radius: 5px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-links">
+            <a onclick="initAppMode('exam', this)"><i class="fa-solid fa-bullhorn"></i> THÔNG BÁO LỊCH THI</a>
+            <a onclick="showView('notice-choice-view', this)"><i class="fa-solid fa-clock-rotate-left"></i> THAY ĐỔI LỊCH HỌC</a>
+            <a onclick="showView('student-mgmt-view', this)"><i class="fa-solid fa-user-gear"></i> QUẢN LÍ SINH VIÊN</a>
+            <a onclick="initAppMode('manual', this)"><i class="fa-solid fa-calendar-check"></i> XẾP LỊCH</a>
+            <a onclick="showView('stats-main-view', this)"><i class="fa-solid fa-chart-line"></i> THỐNG KÊ & BÁO CÁO</a>
+        </div>
+        <div class="user-area"><div class="avatar-container"><img src="https://cdn-icons-png.flaticon.com/512/411/411707.png" alt="Skull"></div></div>
+    </header>
+
+    <div class="content-main">
+        <div id="welcome-view" class="sub-view active-view" style="display:flex; justify-content:center; align-items:center; background:var(--admin-bg);">
+            <h1 class="welcome-text" style="font-family:'Montserrat'; font-weight:700; font-style:italic; font-size:3.5rem; color:var(--welcome-gold);">Welcome, Admin HAI DUONG</h1>
+        </div>
+
+        <div id="student-mgmt-view" class="sub-view">
+            <div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="showView('welcome-view')"></i> Quản lí sinh viên</div>
+            <div class="mgmt-grid">
+                <div id="std-list"></div>
+                <div>
+                    <div class="action-box" onclick="openModal('modal-add-std')">Thêm</div>
+                    <div class="action-box" style="background:var(--yellow-accent)" onclick="openModal('modal-del-std')">Xóa</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendar-view-mode" class="sub-view">
+            <div class="view-header"><i class="fa-solid fa-arrow-left back-icon" id="cal-back-arrow"></i> <span id="cal-header-title"></span></div>
+            <div style="display:flex; flex:1; justify-content:center; align-items:center; gap:40px;">
+                <div class="calendar-card" id="cal-card-box">
+                    <div style="background:var(--yellow-accent); padding:10px 20px; border-radius:25px; display:flex; justify-content:space-between; margin-bottom:25px; font-weight:bold;">
+                        <i class="fa-solid fa-chevron-left" onclick="changeMonth(-1)"></i><span id="month-year-txt">12/2025</span><i class="fa-solid fa-chevron-right" onclick="changeMonth(1)"></i>
+                    </div>
+                    <table class="calendar-table"><tbody id="cal-body-content"></tbody></table>
+                    <button style="width:100%; background:var(--yellow-accent); border:none; padding:15px; margin-top:20px; font-weight:bold; border-radius:10px;">Chọn ngày</button>
+                </div>
+                <div id="day-detail-box" style="display: none; width: 650px; position: relative;">
+                    <div class="header-tools">
+                        <div class="date-badge" id="date-label" onclick="closeDayDetail()"></div>
+                        <div id="dynamic-btn-holder"></div>
+                    </div>
+                    <div id="schedule-list-area" style="margin-top: 60px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notice-choice-view" class="sub-view">
+            <div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="showView('welcome-view')"></i> Thông báo thay đổi lịch học</div>
+            <div style="display:flex; flex-direction:column; gap:30px; align-items:center; padding-top:50px;">
+                <div class="notice-item" style="background:var(--yellow-accent); padding:20px 40px; border-radius:10px; width:600px; cursor:pointer; font-weight:bold; text-decoration:underline; font-size:20px; color:black;" onclick="initAppMode('change')"><i class="fa-solid fa-file-lines"></i> Thông báo thay đổi lịch học</div>
+                <div class="notice-item" style="background:var(--yellow-accent); padding:20px 40px; border-radius:10px; width:600px; cursor:pointer; font-weight:bold; text-decoration:underline; font-size:20px; color:black;" onclick="initAppMode('other')"><i class="fa-solid fa-file-lines"></i> Thông báo khác</div>
+            </div>
+        </div>
+
+        <div id="stats-main-view" class="sub-view">
+            <div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="showView('welcome-view')"></i> Thống kê & báo cáo</div>
+            <div style="display:flex; padding:40px; gap:50px; flex:1;">
+                <div style="display:flex; flex-direction:column; gap:30px; width:280px;">
+                    <button class="menu-btn active" onclick="renderStatsCat('overview', this)">Tổng quan nhanh <i class="fa-solid fa-caret-right"></i></button>
+                    <button class="menu-btn" onclick="renderStatsCat('charts', this)">Biểu đồ và phân tích <i class="fa-solid fa-caret-down"></i></button>
+                    <button class="menu-btn" onclick="showView('export-view', this)">Báo cáo và xuất file</button>
+                </div>
+                <div id="stats-display" style="flex:1; display:flex; flex-direction:column; gap:25px;"></div>
+            </div>
+        </div>
+
+        <div id="export-view" class="sub-view">
+            <div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="showView('stats-main-view')"></i> Báo cáo và xuất file</div>
+            <div class="export-card">
+                <div><label style="font-weight:bold; font-size:20px;">Loại báo cáo</label><select id="rep-sel" style="width:100%; padding:12px; margin:10px 0; border:none; background:#e0e0e0; font-weight:bold;" onchange="updateExpSum()"><option value="admin">Quản trị & vận hành</option><option value="student">Hoạt động sinh viên</option><option value="security">Bảo mật dữ liệu</option></select><label style="font-weight:bold; font-size:20px;">Sơ lược báo cáo</label><div class="summary-box-grey" id="exp-sum"></div></div>
+                <div style="padding-left:30px;"><label style="font-weight:bold; font-size:20px;">Định dạng</label><div style="margin:20px 0;"><input type="radio" name="f" id="f_pdf" checked> PDF &nbsp;&nbsp;&nbsp; <input type="radio" name="f" id="f_xl"> Excel</div><div style="margin-top:50px; display:flex; gap:20px;"><button style="background:var(--btn-blue); padding:15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="alert('Export PDF')">Xuất PDF</button><button style="background:var(--btn-blue); padding:15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="alert('Export Excel')">Xuất Excel</button></div></div>
+            </div>
+        </div>
+
+        <div id="table-view" class="sub-view"><div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="showView('stats-main-view')"></i> Thống kê chi tiết</div><div id="table-content" style="padding:40px;"></div></div>
+        <div id="chart-view" class="sub-view"><div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="showView('stats-main-view')"></i> Biểu đồ phân tích</div><div style="display:flex; justify-content:center; padding:40px;"><div style="background:white; padding:30px; border-radius:20px;"><h2 id="chart-label" style="text-align:center; margin-bottom:20px;"></h2><canvas id="canvasObj" width="400" height="400"></canvas></div></div></div>
+        <div id="other-notice-view" class="sub-view"><div class="view-header"><i class="fa-solid fa-arrow-left back-icon" onclick="initAppMode('other')"></i> Thông báo khác</div><div class="view-body"><div class="date-badge" style="position:absolute; top:40px; right:40px;" id="other-date-badge" onclick="showView('calendar-view-mode')"></div><div style="width:700px; margin:100px auto;"><div style="background:var(--yellow-accent); display:inline-block; padding:10px 20px; font-weight:bold; cursor:pointer; margin-bottom:20px;" onclick="openModal('modal-add-other')">Thêm thông báo</div><div id="other-list"></div></div></div></div>
+    </div>
+
+    <div class="modal" id="modal-manual-xep">
+        <div class="modal-content">
+            <h2 style="margin-bottom:20px; border-bottom:2px solid var(--header-green); text-align:center;">Thêm Lịch Học Mới</h2>
+            <div class="input-group"><label>Nhập môn học *</label><input type="text" id="man-sub"></div>
+            <div class="input-group"><label>Nhập phòng học *</label><input type="text" id="man-room"></div>
+            <div class="input-group"><label>Nhập tên giáo viên</label><input type="text" id="man-tea"></div>
+            <div style="display:flex; justify-content:space-between; margin-top:30px;">
+                <button onclick="closeModal('modal-manual-xep')" style="background:var(--btn-red); padding:12px 40px; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Hủy</button>
+                <button onclick="saveManualLogic()" style="background:var(--btn-green); padding:12px 40px; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-change-lich">
+        <div class="modal-content" style="width: 850px;">
+            <div class="comp-grid">
+                <div style="display:flex; flex-direction:column; gap:15px;"><div class="input-group"><label>Nhập môn hiện tại *</label><input type="text" id="old-sub"></div><div class="input-group"><label>Nhập lớp hiện tại *</label><input type="text" id="old-cls"></div><div class="input-group"><label>Nhập giáo viên hiện tại *</label><input type="text" id="old-tea"></div></div>
+                <div class="arrow-col"><i class="fa-solid fa-arrow-right"></i><i class="fa-solid fa-arrow-right"></i><i class="fa-solid fa-arrow-right"></i></div>
+                <div style="display:flex; flex-direction:column; gap:15px;"><div class="input-group"><label>&nbsp;</label><input type="text" id="new-sub"></div><div class="input-group"><label>&nbsp;</label><input type="text" id="new-cls"></div><div class="input-group"><label>&nbsp;</label><input type="text" id="new-tea"></div></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:30px;"><button onclick="closeModal('modal-change-lich')" style="background:var(--btn-red); padding:12px 40px; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Hủy</button><button onclick="saveChangeLogic()" style="background:var(--btn-green); padding:12px 40px; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Xác nhận</button></div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-exam">
+        <div class="modal-content"><h2 style="margin-bottom:20px; border-bottom:2px solid var(--header-green); text-align:center;">Thêm Môn Thi</h2><div class="input-group"><label>Tên môn thi *</label><input type="text" id="ex-n"></div><div class="input-group"><label>Địa điểm thi *</label><input type="text" id="ex-l"></div><div style="display:flex; justify-content:space-between; margin-top:30px;"><button onclick="closeModal('modal-exam')" style="background:var(--btn-red); padding:12px 40px; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Hủy</button><button onclick="saveExamLogic()" style="background:var(--btn-green); padding:12px 40px; border:none; font-weight:bold; cursor:pointer; text-decoration:underline;">Xác nhận</button></div></div>
+    </div>
+
+    <div class="modal" id="modal-add-std"><div class="modal-content"><h2>Thêm sinh viên</h2><div class="input-group"><label>Tên SV *</label><input type="text" id="sn"></div><div class="input-group"><label>Mã SV *</label><input type="text" id="si"></div><div style="display:flex; justify-content:space-between; margin-top:20px;"><button onclick="closeModal('modal-add-std')" style="background:var(--btn-red); padding:10px 30px; border:none; font-weight:bold;">Hủy</button><button onclick="addS()" style="background:var(--btn-green); padding:10px 30px; border:none; font-weight:bold;">Xác nhận</button></div></div></div>
+    <div class="modal" id="modal-del-std"><div class="modal-content"><h2>Xóa sinh viên</h2><div class="input-group"><label>Tên SV *</label><input type="text" id="dn"></div><div class="input-group"><label>Mã SV *</label><input type="text" id="di"></div><div style="display:flex; justify-content:space-between; margin-top:20px;"><button onclick="closeModal('modal-del-std')" style="background:var(--btn-red); padding:10px 30px; border:none; font-weight:bold;">Hủy</button><button onclick="delS()" style="background:var(--btn-green); padding:10px 30px; border:none; font-weight:bold;">Xác nhận</button></div></div></div>
+    <div class="modal" id="modal-add-other"><div class="modal-content"><h2>Nhập thông báo</h2><textarea id="ot-in" style="height:200px; width:100%; padding:15px; border:none; background:var(--yellow-accent); font-weight:bold;"></textarea><div style="display:flex; justify-content:space-between; margin-top:20px;"><button onclick="closeModal('modal-add-other')" style="background:var(--btn-red); padding:10px 30px; border:none; font-weight:bold;">Hủy</button><button onclick="addO()" style="background:var(--btn-green); padding:10px 30px; border:none; font-weight:bold;">Xác nhận</button></div></div></div>
+    <div class="modal" id="success-modal"><div class="success-purple"><i class="fa-solid fa-circle-check" style="font-size:80px; color:var(--btn-green); margin-bottom:20px;"></i><h2 id="success-msg">Thành công!</h2></div></div>
+
+    <script>
+        let stds = [{n:"Bạch Quang Thắng", i:"245124432"}, {n:"Chu Hải Dương", i:"245128891"}, {n:"Ngô Quyết Chiến", i:"245120034"}, {n:"Trần Đình Long", i:"245127765"}];
+        const statsDB = { admin: { n: "Quản trị & Vận hành", d: [["Tổng sinh viên", "215"], ["Tài khoản mới", "80"], ["Thông báo gửi", "12"], ["Đăng nhập/ngày", "72"]] }, student: { n: "Hoạt động Sinh viên", d: [["Xem lịch học", "215"], ["Xem lịch thi", "85"], ["Lượt xuất file", "85"], ["Sự kiện mới", "15"]] }, security: { n: "Bảo mật dữ liệu", d: [["Đăng nhập lạ", "215"], ["Chặn trái phép", "85"], ["Mã OTP gửi", "85"], ["Tài khoản khóa", "2"]] } };
+        const scheds = {}; const exams = {}; const others = {};
+        let cM = 11, cY = 2025, appMode = 'manual', selIdx = -1;
+
+        // KHỞI TẠO MODE
+        function initAppMode(mode, btn) {
+            appMode = mode;
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            const titleMap = { exam: 'Thông báo lịch thi', manual: 'Xếp lịch', change: 'Thông báo thay đổi lịch học', other: 'Thông báo khác' };
+            document.getElementById('cal-header-title').innerText = titleMap[mode];
+            document.getElementById('cal-back-arrow').onclick = () => showView(mode === 'exam' || mode === 'manual' ? 'welcome-view' : 'notice-choice-view');
+            closeDayDetail();
+            showView('calendar-view-mode');
+            renderModeCalendar();
+        }
+
+        function showView(id, btn) {
+            document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active-view'));
+            const target = document.getElementById(id);
+            setTimeout(() => target.classList.add('active-view'), 50);
+            if(id==='student-mgmt-view') renderStds();
+            if(id==='stats-main-view') renderStatsCat('overview', document.querySelector('.menu-btn.active'));
+        }
+
+        function renderModeCalendar() {
+            document.getElementById('month-year-txt').innerText = `${cM+1}/${cY}`;
+            const body = document.getElementById('cal-body-content');
+            body.innerHTML = "";
+            const days = new Date(cY, cM + 1, 0).getDate();
+            const start = new Date(cY, cM, 1).getDay() || 7;
+            let date = 1;
+            for (let i = 0; i < 6; i++) {
+                let row = document.createElement('tr');
+                for (let j = 1; j <= 7; j++) {
+                    let td = document.createElement('td');
+                    if (i === 0 && j < start - 1 || date > days) td.innerText = "";
+                    else { const d = date; td.innerText = d; td.onclick = () => showModeDetail(d); date++; }
+                    row.appendChild(td);
+                }
+                if (row.innerText.trim()) body.appendChild(row);
+            }
+        }
+
+        function showModeDetail(d) {
+            const dateStr = `${d<10?'0'+d:d}/${cM+1}/${cY}`;
+            if (appMode === 'other') { showView('other-notice-view'); document.getElementById('other-date-badge').innerText = dateStr; renderOthers(dateStr); return; }
+
+            document.getElementById('cal-card-box').style.display = 'none';
+            document.getElementById('day-detail-box').style.display = 'block';
+            document.getElementById('date-label').innerText = dateStr;
+
+            const holder = document.getElementById('dynamic-btn-holder'); holder.innerHTML = "";
+            const list = document.getElementById('schedule-list-area'); list.innerHTML = "";
+            const key = `${d}-${cM}-${cY}`;
+            const labels = ["Tiết 1-3", "Tiết 4-6", "Tiết 7-9", "Tiết 10-12"];
+
+            // LOGIC XẾP LỊCH (+) CHUẨN ẢNH 01, 02
+            if (appMode === 'manual') {
+                if(!scheds[key]) scheds[key] = ["Đại số tuyến tính", "Công nghệ phần mềm", "", "Cơ sở dữ liệu"]; // Ngày 25 index 2 trống
+                labels.forEach((l, i) => {
+                    const isBlank = (d === 25 && i === 2 && scheds[key][i] === ""); 
+                    list.innerHTML += `<div class="display-row">
+                        <div class="arrow-label">${l}</div>
+                        <div class="data-box ${isBlank?'empty-box':''}">${isBlank?'Lớp không có lịch học!':scheds[key][i]}</div>
+                        ${isBlank?'<div id="plus-area"><i class="fa-solid fa-circle-plus" style="color:var(--yellow-accent); font-size:35px; cursor:pointer;" onclick="togglePlus()"></i></div>':''}
+                    </div>`;
+                });
+            } 
+            else if (appMode === 'change') {
+                holder.innerHTML = `<div class="btn-top-yellow" onclick="done('Đã thông báo lịch tới người dùng!')">Thông báo đổi lịch</div>`;
+                if(!scheds[key]) scheds[key] = ["Đại số tuyến tính", "Triết học Mác - Lênin", "Đại số tuyến tính", "Điền Kinh"];
+                labels.forEach((l, i) => list.innerHTML += `<div class="display-row" onclick="selIdx=${i}; openModal('modal-change-lich')"><div class="arrow-label">${l}</div><div class="data-box">${scheds[key][i]}</div></div>`);
+            } 
+            else if (appMode === 'exam') {
+                holder.innerHTML = `<div class="btn-top-yellow" onclick="done('Đã thông báo lịch thi tới sinh viên')">Gửi thông báo</div>`;
+                if(!exams[key]) exams[key] = ["Không có môn thi", "Không có môn thi", "Không có môn thi", "Không có môn thi"];
+                labels.forEach((l, i) => list.innerHTML += `<div class="display-row" onclick="selIdx=${i}; openModal('modal-exam')"><div class="arrow-label">${l}</div><div class="data-box">${exams[key][i]}</div></div>`);
+            }
+        }
+
+        // LOGIC DẤU (+) XẾP LỊCH
+        function togglePlus() {
+            document.getElementById('plus-area').innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                    <button style="background:var(--btn-green); border:none; padding:4px 10px; font-weight:bold; cursor:pointer; text-decoration:underline;" onclick="openModal('modal-manual-xep')">Tạo lịch</button>
+                    <button style="background:var(--btn-red); border:none; padding:4px 10px; font-weight:bold; cursor:pointer; text-decoration:underline;" onclick="showModeDetail(25)">Hủy</button>
+                </div>`;
+        }
+
+        function saveManualLogic() {
+            const s = document.getElementById('man-sub').value;
+            const r = document.getElementById('man-room').value;
+            const t = document.getElementById('man-tea').value;
+            if(!s || !r || !t) return alert("Nhập đủ 3 ô!");
+            scheds[`25-11-2025`][2] = s; // Gán môn vào ngày 25
+            closeModal('modal-manual-xep');
+            done("Thêm lịch học thành công!");
+            showModeDetail(25);
+        }
+
+        function saveChangeLogic() { 
+            const n = document.getElementById('new-sub').value; if(!n) return alert("Thiếu ND"); 
+            scheds[`${parseInt(document.getElementById('date-label').innerText)}-${cM}-${cY}`][selIdx] = n; 
+            closeModal('modal-change-lich'); done("Đã thay đổi môn học!"); showModeDetail(parseInt(document.getElementById('date-label').innerText)); 
+        }
+
+        function saveExamLogic() { 
+            const n = document.getElementById('ex-name').value; if(!n) return alert("Thiếu ND"); 
+            exams[`${parseInt(document.getElementById('date-label').innerText)}-${cM}-${cY}`][selIdx] = n; 
+            closeModal('modal-exam'); done("Lưu môn thi thành công!"); showModeDetail(parseInt(document.getElementById('date-label').innerText)); 
+        }
+
+        // SV & Stats (Giữ nguyên)
+        function renderStds() { stds.sort((a,b)=>a.n.localeCompare(b.n,'vi')); document.getElementById('std-list').innerHTML = stds.map(s=>`<div class="display-row"><div class="arrow-label">${s.n}</div><div class="data-box">${s.i}</div></div>`).join(''); }
+        function addS() { const n=document.getElementById('sn').value, i=document.getElementById('si').value; if(!n||!i) return alert("Thiếu ND"); stds.push({n,i}); done("Đã thêm!"); closeModal('modal-add-std'); renderStds(); }
+        function delS() { const n=document.getElementById('dn').value, i=document.getElementById('di').value; const idx=stds.findIndex(x=>x.n===n&&x.i===i); if(idx===-1) return alert("Không tìm thấy"); stds.splice(idx,1); done("Đã xóa!"); closeModal('modal-del-std'); renderStds(); }
+        function renderStatsCat(t, b) { document.querySelectorAll('.menu-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); const area=document.getElementById('stats-display'); area.innerHTML=""; Object.keys(statsDB).forEach((k,i)=>{ const card=document.createElement('div'); card.style=`background:${i===0?'var(--header-green)':'var(--yellow-accent)'}; padding:22px; border-radius:12px; cursor:pointer; font-weight:bold; text-decoration:underline;`; card.innerHTML=`<i class="fa-solid ${k==='admin'?'fa-file-lines':k==='student'?'fa-users':'fa-lock'}"></i> ${statsDB[k].n}`; card.onclick=()=>t==='overview'?openT(k):openC(k); area.appendChild(card); }); }
+        function openT(k) { showView('table-view'); document.getElementById('table-content').innerHTML=`<div style="background:var(--header-green); padding:15px; color:white; font-weight:bold; border-radius:5px; margin-bottom:20px;">${statsDB[k].n}</div>`+statsDB[k].d.map(r=>`<div class="display-row"><div class="arrow-label">${r[0]}</div><div class="data-box">${r[1]}</div></div>`).join(''); }
+        function openC(k) { showView('chart-view'); document.getElementById('chart-label').innerText=statsDB[k].n; if(window.myC) window.myC.destroy(); window.myC=new Chart(document.getElementById('canvasObj'),{type:'pie',data:{labels:statsDB[k].d.map(r=>r[0]),datasets:[{data:statsDB[k].d.map(r=>parseInt(r[1])),backgroundColor:['#ff6384','#36a2eb','#ffce56','#4bc0c0']}]}}); }
+        function renderOthers(d) { const l=others[d]||[]; document.getElementById('other-list').innerHTML=l.length?l.map(n=>`<div style="background:var(--yellow-accent); padding:20px; border-radius:8px; font-weight:bold; text-align:center; margin-bottom:10px;">${n}</div>`).join(''):`<div style="background:var(--yellow-accent); padding:20px; border-radius:8px; font-weight:bold; text-align:center;">Không có thông báo khác!</div>`; }
+        function addO() { const v=document.getElementById('ot-in').value; if(!v) return alert("Nhập ND!"); const d=document.getElementById('other-date-badge').innerText; if(!others[d]) others[d]=[]; others[d].push(v); done("Đã thêm!"); closeModal('modal-add-other'); renderOthers(d); }
+
+        function closeDayDetail() { document.getElementById('day-detail-box').style.display='none'; document.getElementById('cal-card-box').style.display='block'; }
+        function openModal(id) { document.getElementById(id).style.display='flex'; }
+        function closeModal(id) { document.getElementById(id).style.display='none'; }
+        function changeMonth(v) { cM+=v; if(cM>11){cM=0;cY++;}else if(cM<0){cM=11;cY--;} renderModeCalendar(); }
+        function done(m) { document.getElementById('success-msg').innerText=m; openModal('success-modal'); setTimeout(()=>closeModal('success-modal'),1500); }
+    </script>
+</body>
+</html>
